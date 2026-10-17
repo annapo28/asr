@@ -34,7 +34,7 @@ writer:
   run_name: "conformer_ctc"
 trainer:
   log_step: 50
-  n_epochs: 50
+  n_epochs: 30
   epoch_len: 1000
   max_grad_norm: 10
   device_tensors: ["spectrogram", "text_encoded"]
