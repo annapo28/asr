@@ -8,6 +8,7 @@ defaults:
   - _self_
 model:
   n_feats: 80
+  n_layers: 8
 optimizer:
   _target_: torch.optim.Adam
   lr: 1e-3
@@ -32,9 +33,10 @@ dataloader:
 writer:
   project_name: "asr_hw"
   run_name: "conformer_ctc"
+  log_checkpoints: True
 trainer:
   log_step: 50
-  n_epochs: 30
+  n_epochs: 45
   epoch_len: 1000
   max_grad_norm: 10
   device_tensors: ["spectrogram", "text_encoded"]
@@ -42,7 +44,7 @@ trainer:
   device: auto
   override: False
   monitor: "min val_WER_(Argmax)"
-  save_period: 5
+  save_period: 45
   early_stop: ${trainer.n_epochs}
   save_dir: "saved"
   seed: 1

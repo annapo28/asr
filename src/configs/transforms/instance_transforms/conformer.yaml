@@ -5,19 +5,23 @@ train:
     n_fft: 400
     hop_length: 160
     n_mels: 80
+  audio:
+    _target_: torchvision.transforms.v2.Compose
+    transforms:
+      - _target_: src.transforms.wav_augs.Gain
+        min_gain_in_db: -6.0
+        max_gain_in_db: 6.0
+        p: 0.5
+      - _target_: src.transforms.wav_augs.ColoredNoise
+        min_snr_in_db: 15.0
+        max_snr_in_db: 30.0
+        p: 0.5
+        sample_rate: 16000
   spectrogram:
     _target_: torch.nn.Sequential
     _args_:
       - {_target_: torchaudio.transforms.FrequencyMasking, freq_mask_param: 27}
       - {_target_: torchaudio.transforms.FrequencyMasking, freq_mask_param: 27}
-      - {_target_: torchaudio.transforms.TimeMasking, time_mask_param: 100, p: 0.05}
-      - {_target_: torchaudio.transforms.TimeMasking, time_mask_param: 100, p: 0.05}
-      - {_target_: torchaudio.transforms.TimeMasking, time_mask_param: 100, p: 0.05}
-      - {_target_: torchaudio.transforms.TimeMasking, time_mask_param: 100, p: 0.05}
-      - {_target_: torchaudio.transforms.TimeMasking, time_mask_param: 100, p: 0.05}
-      - {_target_: torchaudio.transforms.TimeMasking, time_mask_param: 100, p: 0.05}
-      - {_target_: torchaudio.transforms.TimeMasking, time_mask_param: 100, p: 0.05}
-      - {_target_: torchaudio.transforms.TimeMasking, time_mask_param: 100, p: 0.05}
       - {_target_: torchaudio.transforms.TimeMasking, time_mask_param: 100, p: 0.05}
       - {_target_: torchaudio.transforms.TimeMasking, time_mask_param: 100, p: 0.05}
 inference:
