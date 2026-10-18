@@ -164,6 +164,14 @@ class Conformer(nn.Module):
 
     def forward(self, spectrogram, spectrogram_length, **batch):
         x = torch.log(spectrogram + 1e-6)
+        valid = (
+            torch.arange(x.shape[-1], device=x.device)[None, :]
+            < spectrogram_length.to(x.device)[:, None]
+        )[:, None, :]
+        n = valid.sum(-1, keepdim=True)
+        mean = (x * valid).sum(-1, keepdim=True) / n
+        std = (((x - mean) ** 2 * valid).sum(-1, keepdim=True) / n).sqrt()
+        x = ((x - mean) / (std + 1e-5)).masked_fill(~valid, 0.0)
         x, lengths = self.subsampling(x, spectrogram_length)
 
         t = x.shape[1]
