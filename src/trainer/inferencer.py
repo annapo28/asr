@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch
 from tqdm.auto import tqdm
 
@@ -62,6 +64,7 @@ class Inferencer(BaseTrainer):
         self.batch_transforms = batch_transforms
 
         self.text_encoder = text_encoder
+        self.beam_size = self.cfg_trainer.get("beam_size", 0)
 
         # define dataloaders
         self.evaluation_dataloaders = {k: v for k, v in dataloaders.items()}
@@ -120,42 +123,32 @@ class Inferencer(BaseTrainer):
                 the dataloader (possibly transformed via batch transform)
                 and model outputs.
         """
-        # TODO change inference logic so it suits ASR assignment
-        # and task pipeline
-
         batch = self.move_batch_to_device(batch)
         batch = self.transform_batch(batch)  # transform batch on device -- faster
 
         outputs = self.model(**batch)
         batch.update(outputs)
 
-        if metrics is not None:
+        if metrics is not None and all(batch["text"]):
+            self._has_targets = True
             for met in self.metrics["inference"]:
                 metrics.update(met.name, met(**batch))
 
-        # Some saving logic. This is an example
-        # Use if you need to save predictions on disk
-
-        batch_size = batch["logits"].shape[0]
-        current_id = batch_idx * batch_size
-
-        for i in range(batch_size):
-            # clone because of
-            # https://github.com/pytorch/pytorch/issues/1995
-            logits = batch["logits"][i].clone()
-            label = batch["labels"][i].clone()
-            pred_label = logits.argmax(dim=-1)
-
-            output_id = current_id + i
-
-            output = {
-                "pred_label": pred_label,
-                "label": label,
-            }
+        log_probs = batch["log_probs"].detach().cpu()
+        for log_prob, length, audio_path in zip(
+            log_probs, batch["log_probs_length"], batch["audio_path"]
+        ):
+            log_prob = log_prob[: int(length)]
+            if self.beam_size:
+                pred_text = self.text_encoder.ctc_beam_search(
+                    log_prob.exp().numpy(), self.beam_size
+                )
+            else:
+                pred_text = self.text_encoder.ctc_decode(log_prob.argmax(-1))
 
             if self.save_path is not None:
-                # you can use safetensors or other lib here
-                torch.save(output, self.save_path / part / f"output_{output_id}.pth")
+                pred_path = self.save_path / part / f"{Path(audio_path).stem}.txt"
+                pred_path.write_text(pred_text)
 
         return batch
 
@@ -173,7 +166,9 @@ class Inferencer(BaseTrainer):
         self.is_train = False
         self.model.eval()
 
-        self.evaluation_metrics.reset()
+        self._has_targets = False
+        if self.evaluation_metrics is not None:
+            self.evaluation_metrics.reset()
 
         # create Save dir
         if self.save_path is not None:
@@ -192,4 +187,6 @@ class Inferencer(BaseTrainer):
                     metrics=self.evaluation_metrics,
                 )
 
+        if not self._has_targets:
+            return {}
         return self.evaluation_metrics.result()

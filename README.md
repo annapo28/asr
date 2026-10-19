@@ -10,9 +10,23 @@
 
 ## About
 
-This repository contains a template for solving ASR task with PyTorch. This template branch is a part of the [HSE DLA course](https://github.com/markovka17/dla) ASR homework. Some parts of the code are missing (or do not follow the most optimal design choices...) and students are required to fill these parts themselves (as well as writing their own models, etc.).
+- Model: Conformer, 8 blocks, d_model 144, 4 heads, conv kernel 32, relative positional encoding (4.6M parameters).
+- Features: 80-dim log-mel spectrogram (25 ms window, 10 ms hop), per-utterance normalization.
+- Augmentations: gain, colored noise, frequency masking, time masking (SpecAugment).
+- Decoding: argmax and hand-written CTC prefix beam search.
+
+Report with training logs and experiments: **ДОБАВИТЬ**
 
 See the task assignment [here](https://github.com/markovka17/dla/tree/2024/hw1_asr).
+
+## Results
+
+| Dataset | Decoding | CER | WER |
+|---|---|---|---|
+| test-clean | argmax | TODO | TODO |
+| test-clean | beam search (10) | TODO | TODO |
+| test-other | argmax | TODO | TODO |
+| test-other | beam search (10) | TODO | TODO |
 
 ## Installation
 
