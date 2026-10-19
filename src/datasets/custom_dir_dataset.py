@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import torchaudio
+import soundfile as sf
 
 from src.datasets.base_dataset import BaseDataset
 
@@ -19,12 +19,12 @@ class CustomDirDataset(BaseDataset):
                 continue
             transcription = data_dir / "transcriptions" / f"{path.stem}.txt"
             text = transcription.read_text().strip() if transcription.exists() else ""
-            info = torchaudio.info(str(path))
+            # info = torchaudio.info(str(path))
             index.append(
                 {
                     "path": str(path),
                     "text": text,
-                    "audio_len": info.num_frames / info.sample_rate,
+                    "audio_len": sf.info(str(path)).duration,
                 }
             )
         super().__init__(index, *args, **kwargs)
