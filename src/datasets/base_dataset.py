@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 import torch
-import torchaudio
+import soundfile as sf
 from torch.utils.data import Dataset
 
 from src.text_encoder import CTCTextEncoder
